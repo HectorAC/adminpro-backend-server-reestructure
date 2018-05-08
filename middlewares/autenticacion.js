@@ -20,6 +20,7 @@ exports.verificaToken = function(req, res, next) {
             });
         }
 
+        // Añadimos el usuario para poder tenerlo en el req de las llamadas
         req.usuario = decoded.usuario;
 
         next();

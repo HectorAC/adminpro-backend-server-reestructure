@@ -1,9 +1,8 @@
 let express = require('express');
 let bcrypt = require('bcryptjs');
 const { ObjectID } = require('mongodb');
-let jwt = require('jsonwebtoken');
 
-var mdAutenticacion = require('../middlewares/autenticacion');
+let mdAutenticacion = require('../middlewares/autenticacion');
 
 let app = express();
 
@@ -16,8 +15,14 @@ let Usuario = require('../models/usuario');
 // ===============================
 app.get('/', (req, res, next) => {
 
+    // localhost:3000/usuario?desde=5
+    let desde = req.query.desde || 0;
+    desde = Number(desde);
+
     // Usuario.find({}, '-password')
     Usuario.find({}, 'nombre email img role')
+        .limit(5)
+        .skip(desde)
         .exec(
             (err, usuarios) => {
 
@@ -29,11 +34,26 @@ app.get('/', (req, res, next) => {
                     });
                 }
 
-                res.status(200).json({
-                    ok: true,
-                    usuarios: usuarios
+                Usuario.count({}, (err, conteo) => {
+                    res.status(200).json({
+                        ok: true,
+                        usuarios: usuarios,
+                        total: conteo
+                    });
                 });
             });
+
+    // Prueba de mongoose-pagination
+    // Usuario.paginate({}, {
+    //     select: '-password',
+    //     offset: desde,
+    //     limit: 5
+    // }).then(usuarios => {
+    //     res.json(usuarios)
+    // }).catch(err => {
+    //     res.json(err);
+    // });
+
 
 });
 
