@@ -1,76 +1,72 @@
-let express = require('express');
-
-let fileUpload = require('express-fileupload');
 let fs = require('fs');
-
-let app = express();
 
 let { Hospital } = require('../models/hospital');
 let { Medico } = require('../models/medico');
 let Usuario = require('../models/usuario');
 
-// default options
-app.use(fileUpload());
 
-app.put('/:tipo/:id', function(req, res) {
+module.exports = {
+    put: (req, res) => {
 
-    let tipo = req.params.tipo;
-    let id = req.params.id;
+        let tipo = req.params.tipo;
+        let id = req.params.id;
 
-    //tipos de colección
-    let tiposValidos = ['hospitales', 'medicos', 'usuarios'];
-    if (tiposValidos.indexOf(tipo) < 0) {
-        return res.status(400).json({
-            ok: false,
-            mensaje: 'Colección no valida',
-            errors: { message: 'Colección no valida' }
-        });
-    }
-
-    if (!req.files) {
-        return res.status(400).json({
-            ok: false,
-            mensaje: 'No selecciono nada',
-            errors: { message: 'Debe seleccionar una imagen' }
-        });
-    }
-
-
-    // Obtener nombre del archivo
-    let archivo = req.files.imagen;
-    let cutFile = archivo.name.split('.');
-    let extensionFile = cutFile.pop().toLowerCase();
-
-    // Extensiones permitidas
-    let validExt = ['png', 'jpg', 'gif', 'jpeg'];
-
-    if (validExt.indexOf(extensionFile) < 0) {
-        return res.status(400).json({
-            ok: false,
-            mensaje: 'Extensión no válida',
-            extensionFile,
-            errors: { message: 'Las extensiones válidas son ' + validExt.join(', ') }
-        });
-    }
-
-    // Nombre de archivo personalizado
-    let nombreArchivo = `${id}-${new Date().getMilliseconds()}.${extensionFile}`;
-
-    // Mover archivo del temporal a un path
-    let path = `./uploads/${tipo}/${nombreArchivo}`;
-
-    archivo.mv(path, err => {
-        if (err) {
-            return res.status(500).json({
+        //tipos de colección
+        let tiposValidos = ['hospitales', 'medicos', 'usuarios'];
+        if (tiposValidos.indexOf(tipo) < 0) {
+            return res.status(400).json({
                 ok: false,
-                mensaje: 'Error al mover el archivo',
-                errors: err
+                mensaje: 'Colección no valida',
+                errors: { message: 'Colección no valida' }
             });
         }
 
-        subirPorTipo(tipo, id, nombreArchivo, res)
-    })
-});
+        if (!req.files) {
+            return res.status(400).json({
+                ok: false,
+                mensaje: 'No selecciono nada',
+                errors: { message: 'Debe seleccionar una imagen' }
+            });
+        }
+
+
+        // Obtener nombre del archivo
+        let archivo = req.files.imagen;
+        let cutFile = archivo.name.split('.');
+        let extensionFile = cutFile.pop().toLowerCase();
+
+        // Extensiones permitidas
+        let validExt = ['png', 'jpg', 'gif', 'jpeg'];
+
+        if (validExt.indexOf(extensionFile) < 0) {
+            return res.status(400).json({
+                ok: false,
+                mensaje: 'Extensión no válida',
+                extensionFile,
+                errors: { message: 'Las extensiones válidas son ' + validExt.join(', ') }
+            });
+        }
+
+        // Nombre de archivo personalizado
+        let nombreArchivo = `${id}-${new Date().getMilliseconds()}.${extensionFile}`;
+
+        // Mover archivo del temporal a un path
+        let path = `./uploads/${tipo}/${nombreArchivo}`;
+
+        archivo.mv(path, err => {
+            if (err) {
+                return res.status(500).json({
+                    ok: false,
+                    mensaje: 'Error al mover el archivo',
+                    errors: err
+                });
+            }
+
+            subirPorTipo(tipo, id, nombreArchivo, res)
+        })
+    }
+}
+
 
 function subirPorTipo(tipo, id, nombreArchivo, res) {
 
@@ -85,7 +81,7 @@ function subirPorTipo(tipo, id, nombreArchivo, res) {
 
             // Si existe, elimina la imagen anterior
             if (fs.existsSync(pathViejo)) {
-                fs.unlink(pathViejo);
+                fs.unlink(pathViejo, (err) => { res.status(500) });
             }
 
             usuario.img = nombreArchivo;
@@ -113,7 +109,7 @@ function subirPorTipo(tipo, id, nombreArchivo, res) {
 
             // Si existe, elimina la imagen anterior
             if (fs.existsSync(pathViejo)) {
-                fs.unlink(pathViejo);
+                fs.unlink(pathViejo, (err) => { res.status(500) });
             }
 
             medico.img = nombreArchivo;
@@ -140,7 +136,7 @@ function subirPorTipo(tipo, id, nombreArchivo, res) {
 
             // Si existe, elimina la imagen anterior
             if (fs.existsSync(pathViejo)) {
-                fs.unlink(pathViejo);
+                fs.unlink(pathViejo, (err) => { res.status(500) });
             }
 
             hospital.img = nombreArchivo;
@@ -156,6 +152,3 @@ function subirPorTipo(tipo, id, nombreArchivo, res) {
         });
     }
 }
-
-
-module.exports = app;

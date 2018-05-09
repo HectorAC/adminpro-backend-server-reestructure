@@ -1,20 +1,19 @@
-let express = require('express');
-let app = express();
 const path = require('path');
 const fs = require('fs');
 // Rutas
-app.get('/:tipo/:img', (req, res, next) => {
 
-    let tipo = req.params.tipo;
-    let img = req.params.img;
-    let pathImagen = path.resolve(__dirname, `../uploads/${tipo}/${img}`);
+module.exports = {
+    get: (req, res, next) => {
 
-    if (fs.existsSync(pathImagen)) {
-        res.sendFile(pathImagen)
-    } else {
-        let pathNotImage = path.resolve(__dirname, `../assets/no-img.jpg`);
-        res.sendFile(pathNotImage)
+        let tipo = req.params.tipo;
+        let img = req.params.img;
+        let pathImagen = path.resolve(__dirname, `../uploads/${tipo}/${img}`);
+
+        if (fs.existsSync(pathImagen)) {
+            res.sendFile(pathImagen)
+        } else {
+            let pathNotImage = path.resolve(__dirname, `../assets/no-img.jpg`);
+            res.sendFile(pathNotImage)
+        }
     }
-});
-
-module.exports = app;
+}

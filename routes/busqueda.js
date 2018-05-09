@@ -1,85 +1,80 @@
-let express = require('express');
-let app = express();
-
 let { Hospital } = require('../models/hospital');
 let { Medico } = require('../models/medico');
 let Usuario = require('../models/usuario');
 
-// ===============================
-//  Busqueda por colección
-// ===============================
-app.get('/coleccion/:tabla/:busqueda', (req, res) => {
+module.exports = {
+    all: (req, res, next) => {
 
-    let busqueda = req.params.busqueda;
-    let tabla = req.params.tabla;
-    let regExp = new RegExp(busqueda, 'i');
-    let promesa;
+        let busqueda = req.params.busqueda;
+        let regExp = new RegExp(busqueda, 'i');
 
-    switch (tabla) {
-        case 'hospitales':
-            promesa = buscarHospitales(busqueda, regExp);
-            break;
-        case 'usuarios':
-            promesa = buscarUsuarios(busqueda, regExp);
-            break;
-        case 'medicos':
-            promesa = buscarMedicos(busqueda, regExp);
-            break;
-        default:
-            return res.status(400).json({
-                ok: false,
-                mensaje: 'Los tipos de busqueda solo son: usuarios medicos y hospitales',
-                error: { message: 'Tipo de tabla/colección no válido' }
+        Promise.all([
+                buscarHospitales(busqueda, regExp),
+                buscarMedicos(busqueda, regExp),
+                buscarUsuarios(busqueda, regExp)
+            ])
+            .then(respuesta => {
+                let [hospitales, medicos, usuarios] = respuesta;
+
+                res.status(200).json({
+                    ok: true,
+                    hospitales: hospitales,
+                    medicos: medicos,
+                    usuarios: usuarios
+                });
+            })
+            .catch(err => {
+                res.status(500).json({
+                    ok: false,
+                    message: 'Error realizando la busqueda',
+                    errors: err,
+                    param: req.params.busqueda
+                })
             });
-    }
+    },
+    // ===============================
+    //  Busqueda por colección
+    // ===============================
+    get: (req, res) => {
 
-    promesa.then(data => {
-        res.status(200).json({
-            ok: true,
-            [tabla]: data
-        });
-    }).catch(err => {
-        res.status(500).json({
-            ok: false,
-            message: 'Error realizando la busqueda',
-            errors: err
-        })
-    });
+        let busqueda = req.params.busqueda;
+        let tabla = req.params.tabla;
+        let regExp = new RegExp(busqueda, 'i');
+        let promesa;
 
-});
-// ===============================
-//  Busqueda general
-// ===============================
-app.get('/todo/:busqueda', (req, res, next) => {
+        switch (tabla) {
+            case 'hospitales':
+                promesa = buscarHospitales(busqueda, regExp);
+                break;
+            case 'usuarios':
+                promesa = buscarUsuarios(busqueda, regExp);
+                break;
+            case 'medicos':
+                promesa = buscarMedicos(busqueda, regExp);
+                break;
+            default:
+                return res.status(400).json({
+                    ok: false,
+                    mensaje: 'Los tipos de busqueda solo son: usuarios medicos y hospitales',
+                    error: { message: 'Tipo de tabla/colección no válido' }
+                });
+        }
 
-    let busqueda = req.params.busqueda;
-    let regExp = new RegExp(busqueda, 'i');
-
-    Promise.all([
-            buscarHospitales(busqueda, regExp),
-            buscarMedicos(busqueda, regExp),
-            buscarUsuarios(busqueda, regExp)
-        ])
-        .then(respuesta => {
-            let [hospitales, medicos, usuarios] = respuesta;
-
+        promesa.then(data => {
             res.status(200).json({
                 ok: true,
-                hospitales: hospitales,
-                medicos: medicos,
-                usuarios: usuarios
+                [tabla]: data
             });
-        })
-        .catch(err => {
+        }).catch(err => {
             res.status(500).json({
                 ok: false,
                 message: 'Error realizando la busqueda',
-                errors: err,
-                param: req.params.busqueda
+                errors: err
             })
         });
-});
 
+    }
+}
 
 function buscarHospitales(busqueda, regExp) {
 
@@ -129,4 +124,3 @@ function buscarUsuarios(busqueda, regExp) {
 
     });
 }
-module.exports = app;

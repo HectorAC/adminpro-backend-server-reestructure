@@ -33,6 +33,10 @@ let usuarioSchema = new Schema({
         uppercase: true,
         default: 'USER_ROLE',
         enum: rolesValidos,
+    },
+    google: {
+        type: Boolean,
+        default: false
     }
 }, {
     versionKey: false
